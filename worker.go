@@ -14,19 +14,31 @@ type Job interface {
 	Callback() JobResponse
 }
 
-func Worker(jobs <-chan Job, response chan<- JobResponse) {
+func Do(jobs []Job, maxWorkers int) {
+    jobsPool := make(chan Job, len(jobs))
+	resultsPool := make(chan JobResponse, len(jobs))
+
+	for i := 0; i < maxWorkers; i++ {
+		go worker(jobsPool, resultsPool)
+	}
+
+	makeJobs(jobsPool, jobs)
+	getResults(resultsPool, jobs)
+}
+
+func worker(jobs <-chan Job, response chan<- JobResponse) {
 	for n := range jobs {
 		response <- n.Callback()
 	}
 }
 
-func MakeJobs(jobs chan<- Job, queue []Job) {
+func makeJobs(jobs chan<- Job, queue []Job) {
 	for _, t := range queue {
 		jobs <- t
 	}
 }
 
-func GetResults(response <-chan JobResponse, queue []Job) {
+func getResults(response <-chan JobResponse, queue []Job) {
 	for range queue {
 		job := <-response
 		status := fmt.Sprintf("[result] '%s' to '%s' was fetched with status '%d'\n", job.name, job.url, job.res)
