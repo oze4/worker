@@ -15,7 +15,7 @@ type Job interface {
 }
 
 func Do(jobs []Job, maxWorkers int) {
-    jobsPool := make(chan Job, len(jobs))
+	jobsPool := make(chan Job, len(jobs))
 	resultsPool := make(chan JobResponse, len(jobs))
 
 	for i := 0; i < maxWorkers; i++ {
